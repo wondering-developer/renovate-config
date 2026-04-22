@@ -1,0 +1,112 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Shared Renovate preset for the WeTrade cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/cluster-baseline//renovate-config/default\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":separateMajorReleases",
+    ":prHourlyLimit2",
+    ":prConcurrentLimit10",
+    "group:allNonMajor",
+    "schedule:earlyMondays"
+  ],
+  "timezone": "Europe/Berlin",
+  "labels": ["dependencies", "renovate"],
+  "rebaseWhen": "conflicted",
+  "assignees": ["wondering-developer"],
+  "kubernetes": {
+    "fileMatch": [
+      "(^|/)helm/.+/values[^/]*\\.ya?ml$",
+      "(^|/)values/[^/]+\\.ya?ml$",
+      "(^|/)manifests/.+\\.ya?ml$",
+      "(^|/)helm/values/.+\\.ya?ml$"
+    ]
+  },
+  "helm-values": {
+    "fileMatch": [
+      "(^|/)helm/.+/values[^/]*\\.ya?ml$",
+      "(^|/)values/[^/]+\\.ya?ml$",
+      "(^|/)helm/values/.+\\.ya?ml$"
+    ]
+  },
+  "helmv3": {
+    "fileMatch": ["(^|/)charts/.+/Chart\\.ya?ml$"]
+  },
+  "customManagers": [
+    {
+      "description": "Schema A: `image: <name>` + `imageDigest: <sha256>` across helm values.yaml. Annotation `# renovate: datasource=<ds> depName=<name> [currentValue=<tag>] [versioning=<v>]` on the line directly above imageDigest. currentValue is optional — defaults to 'latest' for pure-digest tracking; set it explicitly to pin a major/minor (e.g. mariadb 10.6) so Renovate only bumps digests of that tag stream.",
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)helm/.+/values[^/]*\\.ya?ml$",
+        "(^|/)values/[^/]+\\.ya?ml$",
+        "(^|/)helm/values/.+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+currentValue=(?<currentValue>\\S+))?(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*imageDigest:\\s*[\"']?(?<currentDigest>sha256:[a-f0-9]{64})[\"']?"
+      ],
+      "currentValueTemplate": "{{#if currentValue}}{{currentValue}}{{else}}latest{{/if}}",
+      "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}docker{{/if}}"
+    },
+    {
+      "description": "Schema C fallback: inline `image: <name>:<tag>@sha256:<digest>` in contexts the built-in kubernetes-manager does not scan (e.g. `values/*.yaml` outside helm/).",
+      "customType": "regex",
+      "fileMatch": [
+        "(^|/)values/[^/]+\\.ya?ml$"
+      ],
+      "matchStrings": [
+        "image:\\s+(?<depName>[^\\s:@]+):(?<currentValue>[^\\s@\"']+)@(?<currentDigest>sha256:[a-f0-9]{64})"
+      ],
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Own-built images (sebastart/*) are pinned via CI per deploy — never Renovate's job.",
+      "matchPackagePatterns": ["^sebastart/"],
+      "enabled": false
+    },
+    {
+      "description": "Own-built WeTrade image same story.",
+      "matchPackageNames": ["sebastart/wetrade"],
+      "enabled": false
+    },
+    {
+      "description": "Major bumps of upstream images need manual approval (not auto-PR). See dependency dashboard.",
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
+      "matchUpdateTypes": ["digest"],
+      "groupName": "{{depName}} digest",
+      "schedule": ["before 4am on monday"]
+    },
+    {
+      "description": "Helm chart upgrades (Chart.yaml / chart-versions.yaml) — one PR per chart, weekly.",
+      "matchManagers": ["helmv3", "helm-values"],
+      "groupName": "{{depName}} chart",
+      "schedule": ["before 4am on monday"]
+    },
+    {
+      "description": "Security updates bypass the weekly schedule.",
+      "matchDatasources": ["docker"],
+      "vulnerabilityAlerts": {
+        "labels": ["security"],
+        "schedule": ["at any time"],
+        "prPriority": 10
+      }
+    },
+    {
+      "description": "GitHub Actions: pin by SHA, weekly bumps.",
+      "matchManagers": ["github-actions"],
+      "pinDigests": true,
+      "schedule": ["before 4am on monday"]
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security", "renovate"],
+    "schedule": ["at any time"],
+    "prPriority": 10
+  }
+}

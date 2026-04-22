@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for the WeTrade cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/cluster-baseline//renovate-config/default\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
+  "description": "Shared Renovate preset for the WeTrade cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -8,8 +8,7 @@
     ":separateMajorReleases",
     ":prHourlyLimit2",
     ":prConcurrentLimit10",
-    "group:allNonMajor",
-    "schedule:earlyMondays"
+    "group:allNonMajor"
   ],
   "timezone": "Europe/Berlin",
   "labels": ["dependencies", "renovate"],
@@ -79,14 +78,12 @@
     {
       "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
       "matchUpdateTypes": ["digest"],
-      "groupName": "{{depName}} digest",
-      "schedule": ["before 4am on monday"]
+      "groupName": "{{depName}} digest"
     },
     {
-      "description": "Helm chart upgrades (Chart.yaml / chart-versions.yaml) — one PR per chart, weekly.",
+      "description": "Helm chart upgrades (Chart.yaml / chart-versions.yaml) — one PR per chart.",
       "matchManagers": ["helmv3", "helm-values"],
-      "groupName": "{{depName}} chart",
-      "schedule": ["before 4am on monday"]
+      "groupName": "{{depName}} chart"
     },
     {
       "description": "Security updates bypass the weekly schedule.",
@@ -98,10 +95,9 @@
       }
     },
     {
-      "description": "GitHub Actions: pin by SHA, weekly bumps.",
+      "description": "GitHub Actions: pin by SHA.",
       "matchManagers": ["github-actions"],
-      "pinDigests": true,
-      "schedule": ["before 4am on monday"]
+      "pinDigests": true
     }
   ],
   "vulnerabilityAlerts": {

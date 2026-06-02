@@ -76,6 +76,11 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Auto-merge safe updates (digest + minor + patch + pin) once CI is green — stops PRs piling up. Majors stay gated by the dependencyDashboardApproval rule above. Honored by Mend Renovate Cloud (self-hosted CronJob retired 2026-06-02).",
+      "matchUpdateTypes": ["digest", "pin", "minor", "patch"],
+      "automerge": true
+    },
+    {
       "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
       "matchUpdateTypes": ["digest"],
       "groupName": "{{depName}} digest"

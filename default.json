@@ -81,6 +81,14 @@
       "automerge": true
     },
     {
+      "description": "Pre-1.0 (0.x) images: under semver a minor bump (0.3 -> 0.5) is classified 'minor', but for 0.x projects it is routinely BREAKING. Litestream 0.3.13 -> 0.5.12 was auto-merged as 'minor' and broke the honeypal money-DB backup (incident 2026-06-09). Require manual approval for 0.x minor bumps; digest/patch within 0.x stay auto-merged.",
+      "matchDatasources": ["docker"],
+      "matchCurrentVersion": "< 1.0.0",
+      "matchUpdateTypes": ["minor"],
+      "automerge": false,
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
       "matchUpdateTypes": ["digest"],
       "groupName": "{{depName}} digest"

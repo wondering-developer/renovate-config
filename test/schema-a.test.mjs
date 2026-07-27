@@ -109,8 +109,72 @@ for (const c of negatives) {
   }
 }
 
+// --- Schema D: CloudNativePG spec.imageName ------------------------------
+// The built-in kubernetes manager parses manifests/ but only looks at
+// container `image:` keys, so a CNPG Cluster's Postgres image is invisible
+// to it. cluster-baseline's auth Postgres sat two months unbumped that way.
+
+const schemaD = config.customManagers.find((m) =>
+  m.matchStrings?.some((s) => s.includes('imageName')),
+);
+if (!schemaD) {
+  console.error('FAIL: no customManager matching imageName found in default.json');
+  process.exit(1);
+}
+const reD = new RegExp(schemaD.matchStrings[0], 'g');
+
+const dCases = [
+  {
+    name: 'CNPG imageName, unquoted',
+    yaml: `spec:\n  instances: 1\n  imageName: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie@${DIGEST}\n`,
+    expect: {
+      depName: 'ghcr.io/cloudnative-pg/postgresql',
+      currentValue: '18-standard-trixie',
+      currentDigest: DIGEST,
+    },
+  },
+  {
+    name: 'CNPG imageName, quoted',
+    yaml: `spec:\n  imageName: "ghcr.io/cloudnative-pg/postgresql:18@${DIGEST}"\n`,
+    expect: {
+      depName: 'ghcr.io/cloudnative-pg/postgresql',
+      currentValue: '18',
+      currentDigest: DIGEST,
+    },
+  },
+];
+
+for (const c of dCases) {
+  reD.lastIndex = 0;
+  const m = reD.exec(c.yaml);
+  if (!m) {
+    console.error(`FAIL [${c.name}]: no match`);
+    failed++;
+    continue;
+  }
+  let bad = false;
+  for (const [key, want] of Object.entries(c.expect)) {
+    if (m.groups[key] !== want) {
+      console.error(`FAIL [${c.name}]: ${key} = ${JSON.stringify(m.groups[key])}, want ${JSON.stringify(want)}`);
+      failed++;
+      bad = true;
+    }
+  }
+  if (!bad) console.log(`ok   ${c.name}`);
+}
+
+// A tag-only imageName has no digest to track — F-006 requires the digest, so
+// not matching is the correct behaviour, not a miss.
+reD.lastIndex = 0;
+if (reD.exec('  imageName: ghcr.io/cloudnative-pg/postgresql:18\n')) {
+  console.error('FAIL [CNPG imageName without digest]: should not match');
+  failed++;
+} else {
+  console.log('ok   CNPG imageName without digest is not matched');
+}
+
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);
 }
-console.log('\nall Schema-A assertions passed');
+console.log('\nall assertions passed');

@@ -64,6 +64,17 @@
         "image:\\s+(?<depName>[^\\s:@]+):(?<currentValue>[^\\s@\"']+)@(?<currentDigest>sha256:[a-f0-9]{64})"
       ],
       "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Schema D: CloudNativePG `spec.imageName` in Cluster CRs under manifests/. The built-in kubernetes manager parses these files but only looks for container `image:` keys, so a CNPG Postgres image is invisible to Renovate — cluster-baseline's auth Postgres sat on a two-month-old pin at 17 CRITICAL because every bump had to be done by hand. No other manager reads `imageName`, so this cannot produce duplicate deps.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/(^|/)manifests/.+\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "imageName:\\s*[\"']?(?<depName>[^\\s:@\"']+):(?<currentValue>[^\\s@\"']+)@(?<currentDigest>sha256:[a-f0-9]{64})[\"']?"
+      ],
+      "datasourceTemplate": "docker"
     }
   ],
   "packageRules": [

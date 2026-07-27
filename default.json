@@ -11,38 +11,45 @@
     "group:allNonMajor"
   ],
   "timezone": "Europe/Berlin",
-  "labels": ["dependencies", "renovate"],
+  "labels": [
+    "dependencies",
+    "renovate"
+  ],
   "rebaseWhen": "conflicted",
-  "assignees": ["wondering-developer"],
+  "assignees": [
+    "wondering-developer"
+  ],
   "kubernetes": {
-    "fileMatch": [
-      "(^|/)helm/.+/values[^/]*\\.ya?ml$",
-      "(^|/)values/[^/]+\\.ya?ml$",
-      "(^|/)manifests/.+\\.ya?ml$",
-      "(^|/)helm/values/.+\\.ya?ml$"
+    "managerFilePatterns": [
+      "/(^|/)helm/.+/values[^/]*\\.ya?ml$/",
+      "/(^|/)values/[^/]+\\.ya?ml$/",
+      "/(^|/)manifests/.+\\.ya?ml$/",
+      "/(^|/)helm/values/.+\\.ya?ml$/"
     ]
   },
   "helm-values": {
-    "fileMatch": [
-      "(^|/)helm/.+/values[^/]*\\.ya?ml$",
-      "(^|/)values/[^/]+\\.ya?ml$",
-      "(^|/)helm/values/.+\\.ya?ml$"
+    "managerFilePatterns": [
+      "/(^|/)helm/.+/values[^/]*\\.ya?ml$/",
+      "/(^|/)values/[^/]+\\.ya?ml$/",
+      "/(^|/)helm/values/.+\\.ya?ml$/"
     ]
   },
   "helmv3": {
-    "fileMatch": ["(^|/)charts/.+/Chart\\.ya?ml$"]
+    "managerFilePatterns": [
+      "/(^|/)charts/.+/Chart\\.ya?ml$/"
+    ]
   },
   "customManagers": [
     {
-      "description": "Schema A: `image: <name>` + `imageDigest: <sha256>` across helm values.yaml. Annotation `# renovate: datasource=<ds> depName=<name> [currentValue=<tag>] [versioning=<v>]` on the line directly above imageDigest. currentValue is optional — defaults to 'latest' for pure-digest tracking; set it explicitly to pin a major/minor (e.g. mariadb 10.6) so Renovate only bumps digests of that tag stream.",
+      "description": "Schema A: `image: <name>` + `imageDigest: <sha256>` across helm values.yaml. Annotation `# renovate: datasource=<ds> depName=<name> [currentValue=<tag>] [versioning=<v>]` ABOVE the imageDigest line. Comment lines, blank lines and an `imageVersion:` line may sit in between — only those; any other key ends the block so an annotation can never bind to the next image's digest. currentValue is optional — defaults to 'latest' for pure-digest tracking; set it explicitly to pin a major/minor (e.g. mariadb 10.6) so Renovate only bumps digests of that tag stream.",
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)helm/.+/values[^/]*\\.ya?ml$",
-        "(^|/)values/[^/]+\\.ya?ml$",
-        "(^|/)helm/values/.+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/(^|/)helm/.+/values[^/]*\\.ya?ml$/",
+        "/(^|/)values/[^/]+\\.ya?ml$/",
+        "/(^|/)helm/values/.+\\.ya?ml$/"
       ],
       "matchStrings": [
-        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+?)(?:\\s+currentValue=(?<currentValue>\\S+))?(?:\\s+versioning=(?<versioning>\\S+))?\\s*\\n\\s*imageDigest:\\s*[\"']?(?<currentDigest>sha256:[a-f0-9]{64})[\"']?"
+        "#[ \\t]*renovate:[ \\t]*datasource=(?<datasource>\\S+)[ \\t]+depName=(?<depName>\\S+)(?:[ \\t]+currentValue=(?<currentValue>\\S+))?(?:[ \\t]+versioning=(?<versioning>\\S+))?[ \\t]*\\n(?:[ \\t]*(?:#[^\\n]*|imageVersion:[^\\n]*)?\\n)*?[ \\t]*imageDigest:[ \\t]*[\"']?(?<currentDigest>sha256:[a-f0-9]{64})[\"']?"
       ],
       "currentValueTemplate": "{{#if currentValue}}{{currentValue}}{{else}}latest{{/if}}",
       "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}docker{{/if}}"
@@ -50,8 +57,8 @@
     {
       "description": "Schema C fallback: inline `image: <name>:<tag>@sha256:<digest>` in contexts the built-in kubernetes-manager does not scan (e.g. `values/*.yaml` outside helm/).",
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)values/[^/]+\\.ya?ml$"
+      "managerFilePatterns": [
+        "/(^|/)values/[^/]+\\.ya?ml$/"
       ],
       "matchStrings": [
         "image:\\s+(?<depName>[^\\s:@]+):(?<currentValue>[^\\s@\"']+)@(?<currentDigest>sha256:[a-f0-9]{64})"
@@ -62,60 +69,89 @@
   "packageRules": [
     {
       "description": "Own-built images (sebastart/*) are pinned via CI per deploy — never Renovate's job.",
-      "matchPackagePatterns": ["^sebastart/"],
+      "matchPackageNames": [
+        "/^sebastart//"
+      ],
       "enabled": false
     },
     {
       "description": "Own-built WeTrade image same story.",
-      "matchPackageNames": ["sebastart/wetrade"],
+      "matchPackageNames": [
+        "sebastart/wetrade"
+      ],
       "enabled": false
     },
     {
       "description": "Major bumps of upstream images need manual approval (not auto-PR). See dependency dashboard.",
-      "matchUpdateTypes": ["major"],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "dependencyDashboardApproval": true
     },
     {
       "description": "Auto-merge safe updates (digest + minor + patch + pin) once CI is green — stops PRs piling up. Majors stay gated by the dependencyDashboardApproval rule above. Honored by Mend Renovate Cloud (self-hosted CronJob retired 2026-06-02).",
-      "matchUpdateTypes": ["digest", "pin", "minor", "patch"],
+      "matchUpdateTypes": [
+        "digest",
+        "pin",
+        "minor",
+        "patch"
+      ],
       "automerge": true
     },
     {
       "description": "Pre-1.0 (0.x) images: under semver a minor bump (0.3 -> 0.5) is classified 'minor', but for 0.x projects it is routinely BREAKING. Litestream 0.3.13 -> 0.5.12 was auto-merged as 'minor' and broke the honeypal money-DB backup (incident 2026-06-09). Require manual approval for 0.x minor bumps; digest/patch within 0.x stay auto-merged.",
-      "matchDatasources": ["docker"],
+      "matchDatasources": [
+        "docker"
+      ],
       "matchCurrentVersion": "< 1.0.0",
-      "matchUpdateTypes": ["minor"],
+      "matchUpdateTypes": [
+        "minor"
+      ],
       "automerge": false,
       "dependencyDashboardApproval": true
     },
     {
       "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
-      "matchUpdateTypes": ["digest"],
+      "matchUpdateTypes": [
+        "digest"
+      ],
       "groupName": "{{depName}} digest"
     },
     {
       "description": "Helm chart upgrades (Chart.yaml / chart-versions.yaml) — one PR per chart.",
-      "matchManagers": ["helmv3", "helm-values"],
+      "matchManagers": [
+        "helmv3",
+        "helm-values"
+      ],
       "groupName": "{{depName}} chart"
     },
     {
-      "description": "Security updates bypass the weekly schedule.",
-      "matchDatasources": ["docker"],
-      "vulnerabilityAlerts": {
-        "labels": ["security"],
-        "schedule": ["at any time"],
-        "prPriority": 10
-      }
+      "description": "GitHub Actions: pin by SHA.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "pinDigests": true
     },
     {
-      "description": "GitHub Actions: pin by SHA.",
-      "matchManagers": ["github-actions"],
-      "pinDigests": true
+      "description": "`helm` and `sigstore/cosign` are picked up by the github-actions manager, but they are NOT action refs — they are tool releases passed as action *inputs* (`azure/setup-helm` `version:`, `sigstore/cosign-installer` `cosign-release:`). pinDigests tries to rewrite `v3.21.3` into a commit SHA, which the artifact updater cannot do: every repo grew a permanently failing `renovate/pin-dependencies` branch and the dashboard reported 'Error updating branch: update failure'. Version-pin them instead of digest-pinning them.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchDepNames": [
+        "helm",
+        "sigstore/cosign"
+      ],
+      "pinDigests": false
     }
   ],
   "vulnerabilityAlerts": {
-    "labels": ["security", "renovate"],
-    "schedule": ["at any time"],
-    "prPriority": 10
+    "description": "Security updates bypass the schedule for every datasource. `prPriority: 10` used to be set here and in a nested packageRule — Renovate rejects it inside vulnerabilityAlerts and dropped both, so it was never in effect. Removed rather than carried along as dead config; the duplicate `matchDatasources: [docker]` packageRule that wrapped it went with it.",
+    "labels": [
+      "security",
+      "renovate"
+    ],
+    "schedule": [
+      "at any time"
+    ]
   }
 }

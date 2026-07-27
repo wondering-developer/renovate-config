@@ -1,0 +1,34 @@
+name: CI
+
+# This preset is consumed by every workload repo via `extends:`. A broken or
+# silently-degraded rule here stops digest tracking cluster-wide without any
+# visible failure — which is exactly how kubecloud's nextcloud image drifted
+# into 38 CRITICAL CVEs. Validate on every change.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      # --strict also fails on "config migration necessary", so a deprecated
+      # option (fileMatch -> managerFilePatterns) is caught here rather than
+      # being silently auto-migrated by Mend Cloud until the day it isn't.
+      - name: Validate preset
+        run: npx --yes --package renovate renovate-config-validator --strict default.json
+
+      - name: Schema-A regex regression tests
+        run: node test/schema-a.test.mjs

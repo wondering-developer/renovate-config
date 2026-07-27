@@ -178,6 +178,18 @@
       "groupName": "{{depName}} chart"
     },
     {
+      "description": "npm gets its own non-major PR instead of joining the cross-ecosystem `group:allNonMajor` bucket. WePlan#99 is why: one PR carried 47 updates across npm, NuGet, github-actions and Docker. Renovate's npm artifact step failed, it committed the NuGet half anyway, and the result was a green-looking PR advertising ~30 npm bumps whose diff contained no npm file at all. The body also blew past GitHub's 65 KB limit, which truncated away the very 'Artifact update problem' block that would have explained it. Per-ecosystem PRs keep a lockfile failure from silently swallowing an unrelated ecosystem's updates, and keep the body readable.",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin"
+      ],
+      "groupName": "npm non-major"
+    },
+    {
       "description": "GitHub Actions: pin by SHA.",
       "matchManagers": [
         "github-actions"

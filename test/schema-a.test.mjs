@@ -173,6 +173,60 @@ if (reD.exec('  imageName: ghcr.io/cloudnative-pg/postgresql:18\n')) {
   console.log('ok   CNPG imageName without digest is not matched');
 }
 
+// --- Stateful-store packageRule ------------------------------------------
+// Renovate reads `matchPackageNames` entries wrapped in slashes as regexes.
+// A pattern that silently matches nothing is the same class of bug as the
+// Schema-A adjacency miss, so pin it against the depNames the fleet actually
+// uses (kubecloud#40 proposed reg.mini.dev/mariadb 10.6 -> v10.11 as a
+// minor, which the automerge rule would have shipped to a live database).
+
+const dbRule = config.packageRules.find(
+  (r) => r.description?.startsWith('Stateful data stores'),
+);
+if (!dbRule) {
+  console.error('FAIL: stateful-store packageRule missing from default.json');
+  process.exit(1);
+}
+const dbPatterns = dbRule.matchPackageNames.map(
+  (p) => new RegExp(p.replace(/^\/|\/$/g, '')),
+);
+const matchesDbRule = (dep) => dbPatterns.some((re) => re.test(dep));
+
+const shouldMatch = [
+  'reg.mini.dev/mariadb',
+  'reg.mini.dev/redis',
+  'ghcr.io/cloudnative-pg/postgresql',
+  'keinos/sqlite3',
+  'postgres',
+  'mongo',
+];
+const shouldNotMatch = [
+  'nextcloud',
+  'alpine/kubectl',
+  'alpine/k8s',
+  'busybox',
+  'rclone/rclone',
+  'litestream/litestream',
+  // guards against a bare-substring pattern: these are not data stores
+  'my-postgres-exporter',
+  'redis-operator',
+];
+
+for (const dep of shouldMatch) {
+  if (matchesDbRule(dep)) console.log(`ok   stateful rule matches ${dep}`);
+  else {
+    console.error(`FAIL: stateful rule should match ${dep}`);
+    failed++;
+  }
+}
+for (const dep of shouldNotMatch) {
+  if (!matchesDbRule(dep)) console.log(`ok   stateful rule ignores ${dep}`);
+  else {
+    console.error(`FAIL: stateful rule should NOT match ${dep}`);
+    failed++;
+  }
+}
+
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

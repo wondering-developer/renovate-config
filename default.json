@@ -122,6 +122,29 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Stateful data stores: a `minor` bump is a one-way on-disk format migration, not a patch. MariaDB runs mysql_upgrade on first start and will not open the datadir on an older binary afterwards; Postgres needs pg_upgrade across majors and Redis/Mongo rewrite their persistence files. Renovate classified reg.mini.dev/mariadb 10.6 -> v10.11 as `minor`, so the rule above would have auto-merged a live-database version jump into the nextcloud stack (kubecloud#40, caught 2026-07-27 while it was still open). Same failure mode as the litestream 0.3 -> 0.5 incident, just above 1.0 where the matchCurrentVersion rule does not reach. Digest rebuilds of the pinned tag stay auto-merged — those are the security updates and carry no format change.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "/(^|/)mariadb$/",
+        "/(^|/)mysql$/",
+        "/(^|/)postgres$/",
+        "/(^|/)postgresql$/",
+        "/(^|/)redis$/",
+        "/(^|/)valkey$/",
+        "/(^|/)mongo$/",
+        "/(^|/)mongodb$/",
+        "/cloudnative-pg/postgresql$/",
+        "/(^|/)sqlite3$/"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false,
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
       "matchUpdateTypes": [
         "digest"

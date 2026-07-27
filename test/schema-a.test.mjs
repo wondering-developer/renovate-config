@@ -227,6 +227,39 @@ for (const dep of shouldNotMatch) {
   }
 }
 
+
+// --- kubectl skew packageRule -------------------------------------------
+// kubectl is only supported within one minor of the API server, which Renovate
+// cannot know. Same pattern-matching risk as the stateful rule: assert against
+// the image names the fleet really uses.
+
+const kubectlRule = config.packageRules.find((r) =>
+  r.description?.startsWith('kubectl-bearing images'),
+);
+if (!kubectlRule) {
+  console.error('FAIL: kubectl packageRule missing from default.json');
+  process.exit(1);
+}
+const kubectlPatterns = kubectlRule.matchPackageNames.map(
+  (p) => new RegExp(p.replace(/^\/|\/$/g, '')),
+);
+const matchesKubectlRule = (dep) => kubectlPatterns.some((re) => re.test(dep));
+
+for (const dep of ['alpine/k8s', 'alpine/kubectl', 'bitnami/kubectl', 'rancher/kubectl']) {
+  if (matchesKubectlRule(dep)) console.log(`ok   kubectl rule matches ${dep}`);
+  else {
+    console.error(`FAIL: kubectl rule should match ${dep}`);
+    failed++;
+  }
+}
+for (const dep of ['nextcloud', 'busybox', 'reg.mini.dev/redis', 'alpine/helm']) {
+  if (!matchesKubectlRule(dep)) console.log(`ok   kubectl rule ignores ${dep}`);
+  else {
+    console.error(`FAIL: kubectl rule should NOT match ${dep}`);
+    failed++;
+  }
+}
+
 if (failed) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

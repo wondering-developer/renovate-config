@@ -145,6 +145,24 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "kubectl-bearing images are version-coupled to the cluster, which Renovate cannot see. Kubernetes supports kubectl within ONE minor of kube-apiserver; the API server here is k3s v1.31.14, so the supported window is 1.30-1.32. Unattended minor bumps had already carried the fleet well past it — alpine/k8s:1.36.2 in wetrade-autopause, kaniko-pod-cleanup and stuck-pod-reaper, alpine/kubectl:1.35.4 in kubecloud, against alpine/k8s:1.31.13 which is actually correct. Nothing is visibly broken because the basic verbs keep working, which is exactly why it drifted unnoticed for so long. Minor bumps now need a human to check them against the running server version (kubectl version -o json). Digest and patch updates of the pinned minor stay auto-merged.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchPackageNames": [
+        "/(^|/)alpine/k8s$/",
+        "/(^|/)alpine/kubectl$/",
+        "/(^|/)bitnami/kubectl$/",
+        "/(^|/)rancher/kubectl$/",
+        "/(^|/)kubectl$/"
+      ],
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "automerge": false,
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
       "matchUpdateTypes": [
         "digest"

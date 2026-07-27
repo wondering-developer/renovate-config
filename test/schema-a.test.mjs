@@ -109,6 +109,26 @@ for (const c of negatives) {
   }
 }
 
+// CRLF: on a Windows checkout with core.autocrlf=true the manager sees CR LF
+// line breaks. An LF-only pattern then matches NOTHING at all, with no warning
+// — the same silent-failure shape as the adjacency bug this file exists for.
+// Found by running Renovate itself in --dry-run on Windows: it reported "No
+// dependencies found in file for custom regex manager" for a values.yaml the
+// same pattern matched five times when read straight from the API.
+for (const c of cases) {
+  re.lastIndex = 0;
+  const m = re.exec(c.yaml.replace(/\n/g, "\r\n"));
+  if (!m) {
+    console.error(`FAIL [CRLF: ${c.name}]: no match`);
+    failed++;
+  } else if (m.groups.currentDigest !== c.expect.currentDigest) {
+    console.error(`FAIL [CRLF: ${c.name}]: wrong digest`);
+    failed++;
+  } else {
+    console.log(`ok   CRLF: ${c.name}`);
+  }
+}
+
 // --- Schema D: CloudNativePG spec.imageName ------------------------------
 // The built-in kubernetes manager parses manifests/ but only looks at
 // container `image:` keys, so a CNPG Cluster's Postgres image is invisible

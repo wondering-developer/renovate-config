@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for the WeTrade cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
+  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -82,13 +82,6 @@
       "description": "Own-built images (sebastart/*) are pinned via CI per deploy — never Renovate's job.",
       "matchPackageNames": [
         "/^sebastart//"
-      ],
-      "enabled": false
-    },
-    {
-      "description": "Own-built WeTrade image same story.",
-      "matchPackageNames": [
-        "sebastart/wetrade"
       ],
       "enabled": false
     },

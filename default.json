@@ -15,7 +15,7 @@
     "dependencies",
     "renovate"
   ],
-  "rebaseWhen": "conflicted",
+  "rebaseWhen": "auto",
   "assignees": [
     "wondering-developer"
   ],

@@ -86,6 +86,13 @@
       "enabled": false
     },
     {
+      "description": "Minimus (reg.mini.dev) is winding down after the Echo acquisition (2026-08-27); since 2026-10-27 anonymous pulls return 403 for every repo. A digest bump Renovate still sees would roll a digest no node can pull (weatherstation-postgres went down that way on 2026-10-27). Frozen until every image has moved to Docker Hardened Images (dhi.io) — then delete this rule together with the last reg.mini.dev reference.",
+      "matchPackageNames": [
+        "/^reg\\.mini\\.dev//"
+      ],
+      "enabled": false
+    },
+    {
       "description": "Major bumps of upstream images need manual approval (not auto-PR). See dependency dashboard.",
       "matchUpdateTypes": [
         "major"

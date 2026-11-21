@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests. constraints.npm ^11 (2026-11-21): Mend runs npm 12 by default, where allow-remote is off; lockfile updates of packages with bundled deps (@tailwindcss/oxide-wasm32-wasi) fail with EALLOWREMOTE. Remove once npm/cli#9800 is fixed.",
+  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests. schedule (2026-11-21): Renovate only creates/rebases branches on Mondays 00:00-05:59 Europe/Berlin, so updates land as one weekly batch instead of a CI+deploy per release (November: 2,000 Actions minutes gone in week one, ~65 % Renovate). Security updates bypass it (vulnerabilityAlerts.schedule). Repos may override with their own schedule. constraints.npm ^11 (2026-11-21): Mend runs npm 12 by default, where allow-remote is off; lockfile updates of packages with bundled deps (@tailwindcss/oxide-wasm32-wasi) fail with EALLOWREMOTE. Remove once npm/cli#9800 is fixed.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -16,6 +16,9 @@
     "renovate"
   ],
   "rebaseWhen": "auto",
+  "schedule": [
+    "* 0-5 * * 1"
+  ],
   "constraints": {
     "npm": "^11"
   },
@@ -166,11 +169,11 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "Group upstream digest-only updates per image — avoids PR storms when a tag gets a silent rebuild.",
+      "description": "All digest-only updates of a repo in ONE PR (2026-11-21, was one PR per image). Same-tag rebuilds are low-risk, and every separate PR cost its own CI run plus, after automerge, its own deploy-on-push - in November that burned the org's 2,000 Actions minutes in the first week (Renovate caused ~65 %).",
       "matchUpdateTypes": [
         "digest"
       ],
-      "groupName": "{{depName}} digest"
+      "groupName": "container digests"
     },
     {
       "description": "Helm chart upgrades (Chart.yaml / chart-versions.yaml) — one PR per chart.",

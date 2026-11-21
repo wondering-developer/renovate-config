@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
+  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests. constraints.npm ^11 (2026-11-21): Mend runs npm 12 by default, where allow-remote is off; lockfile updates of packages with bundled deps (@tailwindcss/oxide-wasm32-wasi) fail with EALLOWREMOTE. Remove once npm/cli#9800 is fixed.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -16,6 +16,9 @@
     "renovate"
   ],
   "rebaseWhen": "auto",
+  "constraints": {
+    "npm": "^11"
+  },
   "assignees": [
     "wondering-developer"
   ],
@@ -197,12 +200,13 @@
       "pinDigests": true
     },
     {
-      "description": "`helm` and `sigstore/cosign` are picked up by the github-actions manager, but they are NOT action refs — they are tool releases passed as action *inputs* (`azure/setup-helm` `version:`, `sigstore/cosign-installer` `cosign-release:`). pinDigests tries to rewrite `v3.21.3` into a commit SHA, which the artifact updater cannot do: every repo grew a permanently failing `renovate/pin-dependencies` branch and the dashboard reported 'Error updating branch: update failure'. Version-pin them instead of digest-pinning them.",
+      "description": "`helm` and `sigstore/cosign` are picked up by the github-actions manager, but they are NOT action refs — they are tool releases passed as action *inputs* (`azure/setup-helm` `version:`, `sigstore/cosign-installer` `cosign-release:`). pinDigests tries to rewrite `v3.21.3` into a commit SHA, which the artifact updater cannot do: every repo grew a permanently failing `renovate/pin-dependencies` branch and the dashboard reported 'Error updating branch: update failure'. Version-pin them instead of digest-pinning them. 2026-11-21: `kubectl` added (`azure/setup-kubectl` `version:`) — same failure, 'pin dependency kubectl to <sha>' errored in kubecloud, paperless, assistent and github-actions-runner-setup.",
       "matchManagers": [
         "github-actions"
       ],
       "matchDepNames": [
         "helm",
+        "kubectl",
         "sigstore/cosign"
       ],
       "pinDigests": false

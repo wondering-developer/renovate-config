@@ -197,12 +197,13 @@
       "pinDigests": true
     },
     {
-      "description": "`helm` and `sigstore/cosign` are picked up by the github-actions manager, but they are NOT action refs — they are tool releases passed as action *inputs* (`azure/setup-helm` `version:`, `sigstore/cosign-installer` `cosign-release:`). pinDigests tries to rewrite `v3.21.3` into a commit SHA, which the artifact updater cannot do: every repo grew a permanently failing `renovate/pin-dependencies` branch and the dashboard reported 'Error updating branch: update failure'. Version-pin them instead of digest-pinning them.",
+      "description": "`helm` and `sigstore/cosign` are picked up by the github-actions manager, but they are NOT action refs — they are tool releases passed as action *inputs* (`azure/setup-helm` `version:`, `sigstore/cosign-installer` `cosign-release:`). pinDigests tries to rewrite `v3.21.3` into a commit SHA, which the artifact updater cannot do: every repo grew a permanently failing `renovate/pin-dependencies` branch and the dashboard reported 'Error updating branch: update failure'. Version-pin them instead of digest-pinning them. 2026-11-21: `kubectl` added (`azure/setup-kubectl` `version:`) — same failure, 'pin dependency kubectl to <sha>' errored in kubecloud, paperless, assistent and github-actions-runner-setup.",
       "matchManagers": [
         "github-actions"
       ],
       "matchDepNames": [
         "helm",
+        "kubectl",
         "sigstore/cosign"
       ],
       "pinDigests": false

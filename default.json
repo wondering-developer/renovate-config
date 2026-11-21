@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests.",
+  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests. constraints.npm ^11 (2026-11-21): Mend runs npm 12 by default, where allow-remote is off; lockfile updates of packages with bundled deps (@tailwindcss/oxide-wasm32-wasi) fail with EALLOWREMOTE. Remove once npm/cli#9800 is fixed.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -16,6 +16,9 @@
     "renovate"
   ],
   "rebaseWhen": "auto",
+  "constraints": {
+    "npm": "^11"
+  },
   "assignees": [
     "wondering-developer"
   ],

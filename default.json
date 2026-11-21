@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests. schedule (2026-11-21): Renovate only creates/rebases branches on Mondays 00:00-05:59 Europe/Berlin, so updates land as one weekly batch instead of a CI+deploy per release (November: 2,000 Actions minutes gone in week one, ~65 % Renovate). Security updates bypass it (vulnerabilityAlerts.schedule). Repos may override with their own schedule. constraints.npm ^11 (2026-11-21): Mend runs npm 12 by default, where allow-remote is off; lockfile updates of packages with bundled deps (@tailwindcss/oxide-wasm32-wasi) fail with EALLOWREMOTE. Remove once npm/cli#9800 is fixed.",
+  "description": "Shared Renovate preset for the wondering-developer cluster ecosystem. Consumed by all workload repos via `extends: [\"github>wondering-developer/renovate-config\"]`. Handles three digest-pinning schemas across Helm charts + raw k8s manifests. schedule + rebaseWhen (2026-11-21, decided by Sebastian): Renovate creates branches only on Mondays (whole day, Europe/Berlin; a 6-hour window risked a skipped week, because schedule does not trigger a Mend run) and rebases only on conflicts (rebaseWhen conflicted). Reason: November burned 2,000 Actions minutes in week one, ~65 % Renovate, much of it rebase cascades - every merge to main re-ran CI on all open Renovate PRs. Trade-off: a PR that turns red stays red until re-triggered via its Dependency-Dashboard checkbox. Automerge still happens at any time once green. Security: vulnerabilityAlerts bypass the schedule, but only where GitHub raises an advisory (npm, NuGet, Actions); container digest rebuilds have none and now wait up to a week - the Trivy CRITICAL alert is the safety net for those. Repos may override.",
   "extends": [
     "config:recommended",
     ":dependencyDashboard",
@@ -15,9 +15,9 @@
     "dependencies",
     "renovate"
   ],
-  "rebaseWhen": "auto",
+  "rebaseWhen": "conflicted",
   "schedule": [
-    "* 0-5 * * 1"
+    "* * * * 1"
   ],
   "constraints": {
     "npm": "^11"
@@ -169,11 +169,11 @@
       "dependencyDashboardApproval": true
     },
     {
-      "description": "All digest-only updates of a repo in ONE PR (2026-11-21, was one PR per image). Same-tag rebuilds are low-risk, and every separate PR cost its own CI run plus, after automerge, its own deploy-on-push - in November that burned the org's 2,000 Actions minutes in the first week (Renovate caused ~65 %).",
+      "description": "All digest-only updates of a repo in ONE PR (2026-11-21, was one PR per image): container images, GitHub Action SHAs and the github-actions-runner-setup pin alike. Same-tag rebuilds are low-risk; every separate PR cost its own CI run plus, after automerge, its own deploy-on-push - in November that burned the org's 2,000 Actions minutes in the first week (~65 % Renovate). CI does not pull runtime images, so a broken image only shows at deploy; rollback = revert this one PR. No minimumReleaseAge: docker digests carry no reliable release timestamp.",
       "matchUpdateTypes": [
         "digest"
       ],
-      "groupName": "container digests"
+      "groupName": "digests"
     },
     {
       "description": "Helm chart upgrades (Chart.yaml / chart-versions.yaml) — one PR per chart.",
